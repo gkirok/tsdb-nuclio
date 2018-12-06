@@ -1,11 +1,15 @@
 label = "${UUID.randomUUID().toString()}"
 BUILD_FOLDER = "/go"
-docker_user = "iguaziodocker"
-docker_credentials = "iguazio-prod-docker-credentials"
+quay_user = "gkirok"
+quay_credentials = "iguazio-dev-quay-credentials"
+docker_user = "gallziguazio"
+docker_credentials = "iguazio-dev-docker-credentials"
+artifactory_user = "gallz"
+artifactory_credentials = "iguazio-dev-artifactory-credentials"
 git_project = "tsdb-nuclio"
-git_project_user = "v3io"
-git_deploy_user = "iguazio-prod-git-user"
-git_deploy_user_token = "iguazio-prod-git-user-token"
+git_project_user = "gkirok"
+git_deploy_user = "iguazio-dev-git-user"
+git_deploy_user_token = "iguazio-dev-git-user-token"
 
 properties([pipelineTriggers([[$class: 'PeriodicFolderTrigger', interval: '2m']])])
 podTemplate(label: "${git_project}-${label}", yaml: """
@@ -104,12 +108,17 @@ spec:
                     }
                 }
 
-                stage('push to hub') {
+                stage('push image') {
                     container('docker-cmd') {
-                        withDockerRegistry([credentialsId: docker_credentials, url: ""]) {
-                            sh "docker push ${docker_user}/tsdb-ingest:${TAG_VERSION}"
-                            sh "docker push ${docker_user}/tsdb-query:${TAG_VERSION}"
-                        }
+                        def pipelinex = library(identifier: 'pipelinex@_test_dockerx', retriever: modernSCM(
+                                [$class: 'GitSCMSource',
+                                 credentialsId: git_deploy_user,
+                                 remote: 'git@github.com:iguazio/pipelinex.git'])).com.iguazio.pipelinex
+
+                        pipelinex.dockerx.images_push_multi_registries(["${docker_user}/tsdb-ingest:${TAG_VERSION}", "${docker_user}/tsdb-query:${TAG_VERSION}"],
+                                [['artifactory.iguazeng.com:6555', ${artifactory_user}, ${artifactory_credentials}],
+                                 ['docker.io', ${docker_user}, ${docker_credentials}],
+                                 ['quay.io', ${quay_user}, ${quay_credentials}]])
                     }
                 }
             } else {

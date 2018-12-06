@@ -113,9 +113,9 @@ spec:
                         def pipelinex = library(identifier: 'pipelinex@_test_dockerx', retriever: modernSCM(
                                 [$class: 'GitSCMSource',
                                  credentialsId: git_deploy_user,
-                                 remote: 'git@github.com:iguazio/pipelinex.git'])).com.iguazio.pipelinex
+                                 remote: 'https://github.com/iguazio/pipelinex.git'])).com.iguazio.pipelinex
 
-                        pipelinex.dockerx.images_push_multi_registries(["${docker_user}/tsdb-ingest:${TAG_VERSION}", "${docker_user}/tsdb-query:${TAG_VERSION}"],
+                        dockerx.images_push_multi_registries(["${docker_user}/tsdb-ingest:${TAG_VERSION}", "${docker_user}/tsdb-query:${TAG_VERSION}"],
                                 [['artifactory.iguazeng.com:6555', ${artifactory_user}, ${artifactory_credentials}],
                                  ['docker.io', ${docker_user}, ${docker_credentials}],
                                  ['quay.io', ${quay_user}, ${quay_credentials}]])

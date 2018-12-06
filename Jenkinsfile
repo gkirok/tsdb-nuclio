@@ -115,7 +115,7 @@ spec:
                                  credentialsId: git_deploy_user,
                                  remote: 'https://github.com/iguazio/pipelinex.git'])).com.iguazio.pipelinex
 
-                        dockerx.images_push_multi_registries(["gallziguazio/tsdb-ingest:0.2.23"],
+                        dockerx.images_push_multi_registries(["${docker_user}/tsdb-ingest:0.2.23"],
                                 [pipelinex.DockerRepo.ARTIFACTORY_K8S])
                     }
                 }

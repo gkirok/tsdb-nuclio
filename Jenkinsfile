@@ -115,7 +115,7 @@ spec:
                                  credentialsId: git_deploy_user,
                                  remote: 'https://github.com/iguazio/pipelinex.git'])).com.iguazio.pipelinex
 
-                        dockerx.images_push_multi_registries(["${docker_user}/tsdb-ingest:${TAG_VERSION}"],
+                        dockerx.images_push_multi_registries(["${docker_user}/tsdb-ingest:${TAG_VERSION}", "${docker_user}/tsdb-query:${TAG_VERSION}"],
                                 [['docker.io', docker_user, docker_credentials],
 //                                 ['artifactory.iguazeng.com:6555', artifactory_user, artifactory_credentials],
                                  ['quay.io', quay_user, quay_credentials]])
@@ -133,10 +133,11 @@ spec:
 //                                ['docker.io', docker_user, docker_credentials])
 //                        dockerx.images_push(["${docker_user}/tsdb-query:${TAG_VERSION}"],
 //                                ['quay.io', quay_user, quay_credentials])
-                        dockerx.images_push_multi_registries(["${docker_user}/tsdb-query:${TAG_VERSION}"],
-                                [['docker.io', docker_user, docker_credentials],
-//                                 ['artifactory.iguazeng.com:6555', artifactory_user, artifactory_credentials],
-                                 ['quay.io', quay_user, quay_credentials]])
+
+//                        dockerx.images_push_multi_registries(["${docker_user}/tsdb-query:${TAG_VERSION}"],
+//                                [['docker.io', docker_user, docker_credentials],
+////                                 ['artifactory.iguazeng.com:6555', artifactory_user, artifactory_credentials],
+//                                 ['quay.io', quay_user, quay_credentials]])
                     }
                 }
             } else {

@@ -114,55 +114,23 @@ spec:
                     }
                 }
 
-                stage('push images') {
+                stage('push to hub') {
                     container('docker-cmd') {
-                        def pipelinex = library(identifier: 'pipelinex@_test_dockerx', retriever: modernSCM(
-                                [$class: 'GitSCMSource',
-                                 credentialsId: git_deploy_user,
-                                 remote: 'https://github.com/iguazio/pipelinex.git'])).com.iguazio.pipelinex
-//                        dockerx.images_push(["${docker_user}/tsdb-ingest:${TAG_VERSION}"],
-//                                ['artifactory.iguazeng.com:6555', artifactory_user, artifactory_credentials])
-                        dockerx.images_push(["${docker_user}/tsdb-ingest:${TAG_VERSION}"],
-                                ['docker.io', docker_user, docker_credentials])
-                        dockerx.images_push(["${docker_user}/tsdb-ingest:${TAG_VERSION}"],
-                                ['quay.io', quay_user, quay_credentials])
-//
-//                        dockerx.images_push(["${docker_user}/tsdb-query:${TAG_VERSION}"],
-//                                ['artifactory.iguazeng.com:6555', artifactory_user, artifactory_credentials])
-                        dockerx.images_push(["${docker_user}/tsdb-query:${TAG_VERSION}"],
-                                ['docker.io', docker_user, docker_credentials])
-                        dockerx.images_push(["${docker_user}/tsdb-query:${TAG_VERSION}"],
-                                ['quay.io', quay_user, quay_credentials])
+                        withDockerRegistry([credentialsId: docker_credentials, url: "https://index.docker.io/v1/"]) {
+                            sh "docker push docker.io/${docker_user}/tsdb-ingest:${TAG_VERSION};"
+                            sh "docker push docker.io/${docker_user}/tsdb-query:${TAG_VERSION};"
+                        }
                     }
                 }
 
-//                stage('push tsdb-ingest image') {
-//                    container('docker-cmd') {
-//                        def pipelinex = library(identifier: 'pipelinex@_test_dockerx', retriever: modernSCM(
-//                                [$class       : 'GitSCMSource',
-//                                 credentialsId: git_deploy_user,
-//                                 remote       : 'https://github.com/iguazio/pipelinex.git'])).com.iguazio.pipelinex
-//
-//                        dockerx.images_push_multi_registries(["${docker_user}/tsdb-ingest:${TAG_VERSION}"],
-//                                [['docker.io', docker_user, docker_credentials],
-////                                 ['artifactory.iguazeng.com:6555', artifactory_user, artifactory_credentials],
-//                                 ['quay.io', quay_user, quay_credentials]])
-//                    }
-//                }
-//
-//                stage('push tsdb-query image') {
-//                    container('docker-cmd') {
-//                        def pipelinex = library(identifier: 'pipelinex@_test_dockerx', retriever: modernSCM(
-//                                [$class: 'GitSCMSource',
-//                                 credentialsId: git_deploy_user,
-//                                 remote: 'https://github.com/iguazio/pipelinex.git'])).com.iguazio.pipelinex
-//
-//                        dockerx.images_push_multi_registries([ "${docker_user}/tsdb-query:${TAG_VERSION}"],
-//                                [['docker.io', docker_user, docker_credentials],
-////                                 ['artifactory.iguazeng.com:6555', artifactory_user, artifactory_credentials],
-//                                 ['quay.io', quay_user, quay_credentials]])
-//                    }
-//                }
+                stage('push to quay') {
+                    container('docker-cmd') {
+                        withDockerRegistry([credentialsId: quay_credentials, url: "https://quay.io/api/v1/"]) {
+                            sh "docker push quay.io/${quay_user}/tsdb-ingest:${TAG_VERSION}"
+                            sh "docker push quay.io/${quay_user}/tsdb-query:${TAG_VERSION}"
+                        }
+                    }
+                }
             } else {
                 stage('warning') {
                     if (PUBLISHED_BEFORE >= 240) {

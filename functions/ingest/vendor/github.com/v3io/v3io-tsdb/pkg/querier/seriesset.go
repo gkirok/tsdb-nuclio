@@ -24,7 +24,6 @@ import (
 	"github.com/nuclio/logger"
 	"github.com/v3io/v3io-go-http"
 	"github.com/v3io/v3io-tsdb/pkg/aggregate"
-	"github.com/v3io/v3io-tsdb/pkg/config"
 	"github.com/v3io/v3io-tsdb/pkg/partmgr"
 	"github.com/v3io/v3io-tsdb/pkg/utils"
 )
@@ -45,7 +44,7 @@ type V3ioSeriesSet struct {
 	aggrSeries   *aggregate.AggregateSeries
 	aggrIdx      int
 	canAggregate bool
-	currSeries   utils.Series
+	currSeries   Series
 	aggrSet      *aggregate.AggregateSet
 	noAggrLbl    bool
 	baseTime     int64
@@ -60,7 +59,7 @@ func (s *V3ioSeriesSet) getItems(partition *partmgr.DBPartition, name, filter st
 	if name != "" {
 		shardingKeys = partition.GetShardingKeys(name)
 	}
-	attrs := []string{config.LabelSetAttrName, config.OutOfOrderAttrName, "_name", config.MaxTimeAttrName}
+	attrs := []string{"_lset", "_ooo", "_name", "_maxtime"}
 
 	if s.aggrSeries != nil && s.canAggregate {
 		s.attrs = s.aggrSeries.GetAttrNames()
@@ -108,7 +107,7 @@ func (s *V3ioSeriesSet) Next() bool {
 			// Create a series from aggregation arrays (in the TSDB table) if
 			// the partition stores the desired aggregates
 			maxtUpdate := s.maxt
-			maxTime := s.iter.GetField(config.MaxTimeAttrName)
+			maxTime := s.iter.GetField("_maxtime")
 			if maxTime != nil && int64(maxTime.(int)) < s.maxt {
 				maxtUpdate = int64(maxTime.(int))
 			}
@@ -226,10 +225,19 @@ func (s *V3ioSeriesSet) Err() error {
 }
 
 // Return a series iterator
-func (s *V3ioSeriesSet) At() utils.Series {
+func (s *V3ioSeriesSet) At() Series {
 	if s.aggrSeries == nil {
 		return s.currSeries
 	}
 
 	return NewAggrSeries(s, s.aggrSeries.GetFunctions()[s.aggrIdx])
 }
+
+// Null-series set
+type nullSeriesSet struct {
+	err error
+}
+
+func (s nullSeriesSet) Next() bool { return false }
+func (s nullSeriesSet) At() Series { return nil }
+func (s nullSeriesSet) Err() error { return s.err }

@@ -2,12 +2,6 @@ package benchmark
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
-	"sync/atomic"
-	"testing"
-	"time"
-
 	"github.com/pkg/errors"
 	"github.com/v3io/v3io-tsdb/internal/pkg/performance"
 	"github.com/v3io/v3io-tsdb/pkg/tsdb"
@@ -15,6 +9,11 @@ import (
 	"github.com/v3io/v3io-tsdb/pkg/tsdb/tsdbtest/testutils"
 	"github.com/v3io/v3io-tsdb/pkg/utils"
 	"github.com/v3io/v3io-tsdb/test/benchmark/common"
+	"io/ioutil"
+	"log"
+	"sync/atomic"
+	"testing"
+	"time"
 )
 
 const metricNamePrefix = "Name_"

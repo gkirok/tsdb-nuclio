@@ -23,14 +23,13 @@ such restriction.
 package tsdb_test
 
 import (
-	"math"
-	"testing"
-	"time"
-
 	"github.com/stretchr/testify/suite"
 	"github.com/v3io/v3io-tsdb/pkg/tsdb"
 	"github.com/v3io/v3io-tsdb/pkg/tsdb/tsdbtest"
 	"github.com/v3io/v3io-tsdb/pkg/utils"
+	"math"
+	"testing"
+	"time"
 )
 
 type testTsdbSuite struct {
@@ -38,11 +37,13 @@ type testTsdbSuite struct {
 }
 
 func (suite *testTsdbSuite) TestAppend() {
-	testCtx := suite.T()
-	testParams := tsdbtest.NewTestParams(testCtx)
-	defer tsdbtest.SetUp(testCtx, testParams)()
 
-	adapter, err := tsdb.NewV3ioAdapter(testParams.V3ioConfig(), nil, nil)
+	v3ioConfig, err := tsdbtest.LoadV3ioConfig()
+	suite.Require().NoError(err)
+
+	defer tsdbtest.SetUp(suite.T(), v3ioConfig)()
+
+	adapter, err := tsdb.NewV3ioAdapter(v3ioConfig, nil, nil)
 	suite.Require().NoError(err)
 
 	appender, err := adapter.Appender()

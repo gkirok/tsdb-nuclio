@@ -3,17 +3,15 @@ package formatter
 import (
 	"encoding/csv"
 	"fmt"
+	"github.com/v3io/v3io-tsdb/pkg/querier"
 	"io"
-
-	"github.com/pkg/errors"
-	"github.com/v3io/v3io-tsdb/pkg/utils"
 )
 
 type textFormatter struct {
 	baseFormatter
 }
 
-func (f textFormatter) Write(out io.Writer, set utils.SeriesSet) error {
+func (f textFormatter) Write(out io.Writer, set querier.SeriesSet) error {
 
 	for set.Next() {
 		series := set.At()
@@ -43,7 +41,7 @@ type csvFormatter struct {
 	baseFormatter
 }
 
-func (f csvFormatter) Write(out io.Writer, set utils.SeriesSet) error {
+func (f csvFormatter) Write(out io.Writer, set querier.SeriesSet) error {
 
 	writer := csv.NewWriter(out)
 	for set.Next() {
@@ -81,7 +79,7 @@ const metricTemplate = `
     "datapoints": [%s]
   }`
 
-func (f simpleJsonFormatter) Write(out io.Writer, set utils.SeriesSet) error {
+func (f simpleJsonFormatter) Write(out io.Writer, set querier.SeriesSet) error {
 
 	firstSeries := true
 	output := "["
@@ -121,32 +119,4 @@ func (f simpleJsonFormatter) Write(out io.Writer, set utils.SeriesSet) error {
 	_, err := out.Write([]byte(output + "\n]"))
 
 	return err
-}
-
-type testFormatter struct {
-	baseFormatter
-}
-
-func (f testFormatter) Write(out io.Writer, set utils.SeriesSet) error {
-	var count int
-	for set.Next() {
-		count++
-		series := set.At()
-		iter := series.Iterator()
-		var i int
-		for iter.Next() {
-			i++
-		}
-
-		if iter.Err() != nil {
-			return errors.Errorf("error reading point for label set: %v, at index: %v, error: %v", series.Labels(), i, iter.Err())
-		}
-	}
-
-	if set.Err() != nil {
-		return set.Err()
-	}
-
-	fmt.Fprintf(out, "got %v unique label sets\n", count)
-	return nil
 }

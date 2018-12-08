@@ -21,10 +21,9 @@ such restriction.
 package tsdbctl
 
 import (
-	"fmt"
 	"os"
-	"strings"
 
+	"fmt"
 	"github.com/nuclio/logger"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -32,6 +31,7 @@ import (
 	"github.com/v3io/v3io-tsdb/internal/pkg/performance"
 	"github.com/v3io/v3io-tsdb/pkg/config"
 	"github.com/v3io/v3io-tsdb/pkg/tsdb"
+	"strings"
 )
 
 type RootCommandeer struct {
@@ -47,13 +47,10 @@ type RootCommandeer struct {
 	username    string
 	password    string
 	Reporter    *performance.MetricReporter
-	BuildInfo   *config.BuildInfo
 }
 
 func NewRootCommandeer() *RootCommandeer {
-	commandeer := &RootCommandeer{
-		BuildInfo: config.BuildMetadta,
-	}
+	commandeer := &RootCommandeer{}
 
 	cmd := &cobra.Command{
 		Use:          "tsdbctl [command] [arguments] [flags]",
@@ -92,7 +89,6 @@ func NewRootCommandeer() *RootCommandeer {
 		newInfoCommandeer(commandeer).cmd,
 		newDeleteCommandeer(commandeer).cmd,
 		newCheckCommandeer(commandeer).cmd,
-		newVersionCommandeer(commandeer).cmd,
 	)
 
 	commandeer.cmd = cmd

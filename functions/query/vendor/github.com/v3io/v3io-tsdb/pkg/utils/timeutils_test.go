@@ -23,10 +23,9 @@ such restriction.
 package utils
 
 import (
+	"github.com/stretchr/testify/suite"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/suite"
 )
 
 type testTimeSuite struct {

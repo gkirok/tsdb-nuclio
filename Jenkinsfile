@@ -96,19 +96,25 @@ spec:
                     }
                 }
 
-                stage('build in dood') {
+                stage('build tsdb-ingest in dood') {
                     container('docker-cmd') {
                         sh """
                             cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}/functions/ingest
                             docker build . --tag tsdb-ingest:latest --tag ${docker_user}/tsdb-ingest:${TAG_VERSION} --tag ${quay_user}/tsdb-ingest:${TAG_VERSION} --tag quay.io/${quay_user}/tsdb-ingest:${TAG_VERSION}
+                        """
+                    }
+                }
 
+                stage('build tsdb-query in dood') {
+                    container('docker-cmd') {
+                        sh """
                             cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}/functions/query
                             docker build . --tag tsdb-query:latest --tag ${docker_user}/tsdb-query:${TAG_VERSION} --tag ${quay_user}/tsdb-query:${TAG_VERSION} --tag quay.io/${quay_user}/tsdb-query:${TAG_VERSION}
                         """
                     }
                 }
 
-                stage('push image') {
+                stage('push tsdb-ingest image') {
                     container('docker-cmd') {
                         def pipelinex = library(identifier: 'pipelinex@_test_dockerx', retriever: modernSCM(
                                 [$class       : 'GitSCMSource',
@@ -121,7 +127,8 @@ spec:
                                  ['quay.io', quay_user, quay_credentials]])
                     }
                 }
-                stage('push image') {
+
+                stage('push tsdb-query image') {
                     container('docker-cmd') {
                         def pipelinex = library(identifier: 'pipelinex@_test_dockerx', retriever: modernSCM(
                                 [$class: 'GitSCMSource',

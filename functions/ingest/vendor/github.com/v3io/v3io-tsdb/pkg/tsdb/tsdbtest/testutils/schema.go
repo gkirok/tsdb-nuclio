@@ -1,10 +1,9 @@
 package testutils
 
 import (
-	"testing"
-
 	"github.com/v3io/v3io-tsdb/pkg/config"
 	"github.com/v3io/v3io-tsdb/pkg/tsdb/schema"
+	"testing"
 )
 
 func CreateSchema(t testing.TB, aggregates string) *config.Schema {

@@ -3,11 +3,6 @@ package benchmark
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"testing"
-	"time"
-
 	"github.com/nuclio/nuclio-sdk-go"
 	"github.com/nuclio/nuclio-test-go"
 	"github.com/pkg/errors"
@@ -17,6 +12,10 @@ import (
 	"github.com/v3io/v3io-tsdb/pkg/tsdb/tsdbtest/testutils"
 	"github.com/v3io/v3io-tsdb/pkg/utils"
 	"github.com/v3io/v3io-tsdb/test/benchmark/common"
+	"io/ioutil"
+	"log"
+	"testing"
+	"time"
 )
 
 const defaultDbName = "db0"

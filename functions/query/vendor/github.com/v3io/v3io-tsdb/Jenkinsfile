@@ -1,9 +1,9 @@
 label = "${UUID.randomUUID().toString()}"
 BUILD_FOLDER = "/go"
 git_project = "v3io-tsdb"
-git_project_user = "v3io"
-git_deploy_user = "iguazio-prod-git-user"
-git_deploy_user_token = "iguazio-prod-git-user-token"
+git_project_user = "gkirok"
+git_deploy_user = "iguazio-dev-git-user"
+git_deploy_user_token = "iguazio-dev-git-user-token"
 
 def build_nuclio() {
     withCredentials([
@@ -59,7 +59,7 @@ def build_demo() {
                 sh """
                     cd ${BUILD_FOLDER}
                     git clone https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${git_project_user}/${git_project}.git src/github.com/v3io/${git_project}
-                    cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}/netops/golang/src/github.com/v3io/demos
+                    cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}/netops_demo/golang/src/github.com/v3io/demos
                     rm -rf vendor/github.com/v3io/v3io-tsdb/
                     git clone https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${git_project_user}/v3io-tsdb.git vendor/github.com/v3io/v3io-tsdb
                     cd vendor/github.com/v3io/v3io-tsdb
@@ -75,7 +75,7 @@ def build_demo() {
                     sh """
                         git config --global user.email '${GIT_USERNAME}@iguazio.com'
                         git config --global user.name '${GIT_USERNAME}'
-                        cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}/netops
+                        cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}/netops_demo
                         git add *
                         git commit -am 'Updated TSDB to latest';
                         git push origin master
@@ -208,7 +208,7 @@ spec:
         }
     }
 
-    if ( MAIN_TAG_VERSION != null && MAIN_TAG_VERSION.length() > 0 && PUBLISHED_BEFORE < 900 ) {
+    if ( MAIN_TAG_VERSION != null && MAIN_TAG_VERSION.length() > 0 && PUBLISHED_BEFORE < 240 ) {
         parallel(
             'tsdb-nuclio': {
                 podTemplate(label: "v3io-tsdb-nuclio-${label}", inheritFrom: "${git_project}-${label}") {
@@ -249,10 +249,11 @@ spec:
 
                                 stage('create tsdb-nuclio release') {
                                     container('jnlp') {
-                                        sh "curl -v -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" https://api.github.com/repos/${git_project_user}/tsdb-nuclio/releases -d '{\"tag_name\": \"v${NEXT_VERSION}\", \"target_commitish\": \"master\", \"name\": \"v${NEXT_VERSION}\", \"body\": \"Autorelease, triggered by v3io-tsdb\"}'"
+                                        sh "curl -v -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" https://api.github.com/repos/${git_project_user}/tsdb-nuclio/releases -d '{\"tag_name\": \"v${NEXT_VERSION}\", \"target_commitish\": \"master\", \"name\": \"v${NEXT_VERSION}\", \"body\": \"Autorelease, triggered by v3io-tsdb\", \"prerelease\": true}'"
                                     }
                                 }
                             }
+
                         }
                     }
                 }
@@ -297,7 +298,7 @@ spec:
 
                                 stage('create demos release') {
                                     container('jnlp') {
-                                        sh "curl -v -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" https://api.github.com/repos/${git_project_user}/demos/releases -d '{\"tag_name\": \"v${NEXT_VERSION}\", \"target_commitish\": \"master\", \"name\": \"v${NEXT_VERSION}\", \"body\": \"Autorelease, triggered by v3io-tsdb\"}'"
+                                        sh "curl -v -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" https://api.github.com/repos/${git_project_user}/demos/releases -d '{\"tag_name\": \"v${NEXT_VERSION}\", \"target_commitish\": \"master\", \"name\": \"v${NEXT_VERSION}\", \"body\": \"Autorelease, triggered by v3io-tsdb\", \"prerelease\": true}'"
                                     }
                                 }
                             }
@@ -342,7 +343,7 @@ spec:
 
                                 stage('create prometheus release') {
                                     container('jnlp') {
-                                        sh "curl -v -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" https://api.github.com/repos/${git_project_user}/prometheus/releases -d '{\"tag_name\": \"v${NEXT_VERSION}\", \"target_commitish\": \"master\", \"name\": \"v${NEXT_VERSION}\", \"body\": \"Autorelease, triggered by v3io-tsdb\"}'"
+                                        sh "curl -v -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" https://api.github.com/repos/${git_project_user}/prometheus/releases -d '{\"tag_name\": \"v${NEXT_VERSION}\", \"target_commitish\": \"master\", \"name\": \"v${NEXT_VERSION}\", \"body\": \"Autorelease, triggered by v3io-tsdb\", \"prerelease\": true}'"
                                     }
                                 }
                             }
@@ -353,7 +354,7 @@ spec:
         )
     } else {
         stage('warning') {
-            if (PUBLISHED_BEFORE >= 900) {
+            if (PUBLISHED_BEFORE >= 240) {
                 echo "Tag too old, published before $PUBLISHED_BEFORE minutes."
             } else {
                 echo "${TAG_VERSION} is not release tag."

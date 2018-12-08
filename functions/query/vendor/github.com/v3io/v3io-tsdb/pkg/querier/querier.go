@@ -21,10 +21,6 @@ such restriction.
 package querier
 
 import (
-	"sort"
-	"strings"
-	"time"
-
 	"github.com/nuclio/logger"
 	"github.com/pkg/errors"
 	"github.com/v3io/v3io-go-http"
@@ -33,6 +29,9 @@ import (
 	"github.com/v3io/v3io-tsdb/pkg/config"
 	"github.com/v3io/v3io-tsdb/pkg/partmgr"
 	"github.com/v3io/v3io-tsdb/pkg/utils"
+	"sort"
+	"strings"
+	"time"
 )
 
 // Create a new Querier interface
@@ -70,7 +69,7 @@ type SelectParams struct {
 }
 
 // Standard Time Series Query, return a set of series which match the condition
-func (q *V3ioQuerier) Select(name, functions string, step int64, filter string) (utils.SeriesSet, error) {
+func (q *V3ioQuerier) Select(name, functions string, step int64, filter string) (SeriesSet, error) {
 
 	return q.selectQry(&SelectParams{
 		Name:              name,
@@ -84,7 +83,7 @@ func (q *V3ioQuerier) Select(name, functions string, step int64, filter string) 
 
 // Prometheus time-series query - return a set of time series that match the
 // specified conditions
-func (q *V3ioQuerier) SelectProm(name, functions string, step int64, filter string, noAggr bool) (utils.SeriesSet, error) {
+func (q *V3ioQuerier) SelectProm(name, functions string, step int64, filter string, noAggr bool) (SeriesSet, error) {
 
 	return q.selectQry(&SelectParams{
 		Name:              name,
@@ -101,7 +100,7 @@ func (q *V3ioQuerier) SelectProm(name, functions string, step int64, filter stri
 // For example, get the last 1h, 6h, and 24h stats per metric (specify a 1h
 // aggregation interval (step) of 3600*1000 (=1h), windows 1, 6, and 24, and an
 // end (max) time).
-func (q *V3ioQuerier) SelectOverlap(name, functions string, step int64, windows []int, filter string) (utils.SeriesSet, error) {
+func (q *V3ioQuerier) SelectOverlap(name, functions string, step int64, windows []int, filter string) (SeriesSet, error) {
 	sort.Sort(sort.Reverse(sort.IntSlice(windows)))
 
 	return q.selectQry(&SelectParams{
@@ -115,14 +114,14 @@ func (q *V3ioQuerier) SelectOverlap(name, functions string, step int64, windows 
 }
 
 // Base query function
-func (q *V3ioQuerier) selectQry(params *SelectParams) (set utils.SeriesSet, err error) {
+func (q *V3ioQuerier) selectQry(params *SelectParams) (set SeriesSet, err error) {
 
 	err = q.partitionMngr.ReadAndUpdateSchema()
 	if err != nil {
-		return utils.NullSeriesSet{}, errors.Wrap(err, "Failed to read/update the TSDB schema.")
+		return nullSeriesSet{}, errors.Wrap(err, "Failed to read/update the TSDB schema.")
 	}
 
-	set = utils.NullSeriesSet{}
+	set = nullSeriesSet{}
 
 	q.logger.Debug("Select query:\n\tMetric: %s\n\tStart Time: %s (%d)\n\tEnd Time: %s (%d)\n\tFunction: %s\n\t"+
 		"Step: %d\n\tFilter: %s\n\tWindows: %v\n\tDisable All Aggr: %t\n\tDisable Client Aggr: %t",
@@ -143,11 +142,11 @@ func (q *V3ioQuerier) selectQry(params *SelectParams) (set utils.SeriesSet, err 
 			return
 		}
 
-		sets := make([]utils.SeriesSet, len(parts))
+		sets := make([]SeriesSet, len(parts))
 		for i, part := range parts {
 			set, err = q.queryNumericPartition(part, params)
 			if err != nil {
-				set = utils.NullSeriesSet{}
+				set = nullSeriesSet{}
 				return
 			}
 			sets[i] = set
@@ -161,7 +160,7 @@ func (q *V3ioQuerier) selectQry(params *SelectParams) (set utils.SeriesSet, err 
 			// TODO make it a Go routine per part
 			sorter, error := NewSetSorter(sets[i])
 			if error != nil {
-				set = utils.NullSeriesSet{}
+				set = nullSeriesSet{}
 				err = error
 				return
 			}
@@ -176,7 +175,7 @@ func (q *V3ioQuerier) selectQry(params *SelectParams) (set utils.SeriesSet, err 
 }
 
 // Query a single partition (with integer or float values)
-func (q *V3ioQuerier) queryNumericPartition(partition *partmgr.DBPartition, params *SelectParams) (utils.SeriesSet, error) {
+func (q *V3ioQuerier) queryNumericPartition(partition *partmgr.DBPartition, params *SelectParams) (SeriesSet, error) {
 
 	mint, maxt := partition.GetPartitionRange()
 	step := params.Step

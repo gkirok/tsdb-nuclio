@@ -12,7 +12,7 @@ type testIterSortMergerSuite struct {
 }
 
 type mockSeriesSet struct {
-	s    []utils.Series
+	s    []Series
 	init bool
 }
 
@@ -27,7 +27,7 @@ func (m *mockSeriesSet) Next() bool {
 	return true
 }
 
-func (m *mockSeriesSet) At() utils.Series {
+func (m *mockSeriesSet) At() Series {
 	return m.s[0]
 }
 
@@ -41,7 +41,7 @@ func (stubSeries) Labels() utils.Labels {
 	panic("stub")
 }
 
-func (stubSeries) Iterator() utils.SeriesIterator {
+func (stubSeries) Iterator() SeriesIterator {
 	panic("stub")
 }
 
@@ -51,9 +51,9 @@ func (s stubSeries) GetKey() uint64 {
 
 func (suite *testIterSortMergerSuite) TestIterSortMerger() {
 
-	s1 := []utils.Series{stubSeries(0), stubSeries(1)}
-	s2 := []utils.Series{stubSeries(2), stubSeries(3)}
-	iter, err := newIterSortMerger([]utils.SeriesSet{&mockSeriesSet{s: s1}, &mockSeriesSet{s: s2}})
+	s1 := []Series{stubSeries(0), stubSeries(1)}
+	s2 := []Series{stubSeries(2), stubSeries(3)}
+	iter, err := newIterSortMerger([]SeriesSet{&mockSeriesSet{s: s1}, &mockSeriesSet{s: s2}})
 
 	suite.Require().Nil(err)
 	suite.Require().True(iter.Next())

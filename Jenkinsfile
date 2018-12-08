@@ -133,7 +133,7 @@ spec:
                 }
 
                 stage('update release') {
-                    sh "release_id=\$(curl -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" -X GET https://api.github.com/repos/${git_project_user}/tsdb-nuclio/releases/tags/v0.3.6 | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[\"id\"]'); curl -v -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" -X PATCH https://api.github.com/repos/${git_project_user}/tsdb-nuclio/releases/$release_id -d '{\"prerelease\": false}'"
+                    sh "release_id=\$(curl -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" -X GET https://api.github.com/repos/${git_project_user}/tsdb-nuclio/releases/tags/v${TAG_VERSION} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[\"id\"]'); curl -v -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" -X PATCH https://api.github.com/repos/${git_project_user}/tsdb-nuclio/releases/\${release_id} -d '{\"prerelease\": false}'"
                 }
             } else {
                 stage('warning') {
@@ -149,4 +149,3 @@ spec:
         }
     }
 }
-curl -v -H "Content-Type: application/json" -H "Authorization: token ${GIT_TOKEN}" -X PATCH https://api.github.com/repos/${git_project_user}/tsdb-nuclio/releases/$release_id -d '{"prerelease": false}'

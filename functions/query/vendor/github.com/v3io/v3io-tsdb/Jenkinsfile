@@ -371,7 +371,7 @@ spec:
                     def success = ['demos':false, 'prometheus':false, 'tsdb-nuclio':false]
                     def success_count = 0
                     while( true ) {
-                        success.eash { project, status ->
+                        success.each { project, status ->
                             if (!status) {
                                 RELEASE_SUCCESS = sh(
                                         script: "curl -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" -X GET https://api.github.com/repos/${git_project_user}/${project}/releases/tags/v${NEXT_VERSION} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[\"prerelease\"]' | grep -i false",
@@ -390,7 +390,7 @@ spec:
                         }
                         if(i++ > 10) {
                             def failed
-                            success.eash { project, status ->
+                            success.each { project, status ->
                                 if(!status) {
                                     failed.putAt(project)
                                 }

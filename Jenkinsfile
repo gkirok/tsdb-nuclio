@@ -100,7 +100,7 @@ spec:
                     container('docker-cmd') {
                         sh """
                             cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}/functions/ingest
-                            docker build . --tag tsdb-ingest:latest --tag ${docker_user}/tsdb-ingest:${TAG_VERSION} --tag ${quay_user}/tsdb-ingest:${TAG_VERSION} --tag quay.io/${quay_user}/tsdb-ingest:${TAG_VERSION}
+                            docker build . --tag ${docker_user}/tsdb-ingest:${TAG_VERSION} --tag ${docker_user}/tsdb-ingest:latest --tag quay.io/${quay_user}/tsdb-ingest:${TAG_VERSION} --tag quay.io/${quay_user}/tsdb-ingest:latest
                         """
                     }
                 }
@@ -109,7 +109,7 @@ spec:
                     container('docker-cmd') {
                         sh """
                             cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}/functions/query
-                            docker build . --tag tsdb-query:latest --tag ${docker_user}/tsdb-query:${TAG_VERSION} --tag ${quay_user}/tsdb-query:${TAG_VERSION} --tag quay.io/${quay_user}/tsdb-query:${TAG_VERSION}
+                            docker build . --tag ${docker_user}/tsdb-query:${TAG_VERSION} --tag ${docker_user}/tsdb-query:latest --tag quay.io/${quay_user}/tsdb-query:${TAG_VERSION} --tag quay.io/${quay_user}/tsdb-query:latest
                         """
                     }
                 }
@@ -118,7 +118,9 @@ spec:
                     container('docker-cmd') {
                         withDockerRegistry([credentialsId: docker_credentials, url: "https://index.docker.io/v1/"]) {
                             sh "docker push docker.io/${docker_user}/tsdb-ingest:${TAG_VERSION};"
+                            sh "docker push docker.io/${docker_user}/tsdb-ingest:latest;"
                             sh "docker push docker.io/${docker_user}/tsdb-query:${TAG_VERSION};"
+                            sh "docker push docker.io/${docker_user}/tsdb-query:latest;"
                         }
                     }
                 }
@@ -127,7 +129,9 @@ spec:
                     container('docker-cmd') {
                         withDockerRegistry([credentialsId: quay_credentials, url: "https://quay.io/api/v1/"]) {
                             sh "docker push quay.io/${quay_user}/tsdb-ingest:${TAG_VERSION}"
+                            sh "docker push quay.io/${quay_user}/tsdb-ingest:latest"
                             sh "docker push quay.io/${quay_user}/tsdb-query:${TAG_VERSION}"
+                            sh "docker push quay.io/${quay_user}/tsdb-query:latest"
                         }
                     }
                 }

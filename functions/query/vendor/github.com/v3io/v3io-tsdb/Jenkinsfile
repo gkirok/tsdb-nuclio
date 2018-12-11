@@ -381,7 +381,7 @@ spec:
                                 RELEASE_SUCCESS = sh(
                                         script: "curl --silent -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" -X GET https://api.github.com/repos/${git_project_user}/${project}/releases/tags/v${next_versions[project]} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[\"prerelease\"]' | if grep -iq false; then echo 'prerelease'; else echo 'release'; fi",
                                         returnStdout: true
-                                )
+                                ).trim()
 
                                 echo "RELEASE_SUCCESS --- ${RELEASE_SUCCESS} ---"
                                 if (RELEASE_SUCCESS != null && RELEASE_SUCCESS == 'release') {
@@ -399,7 +399,7 @@ spec:
                             def failed
                             success.each { project, status ->
                                 if(!status) {
-                                    failed.putAt(project)
+                                    failed += project
                                 }
                             }
                             error(failed.join(',') + ' have been not completed :(')

@@ -396,7 +396,7 @@ spec:
 
                                     if(TAG_SHA != null) {
                                         def COMMIT_STATUS = sh(
-                                                script: "curl --silent -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" -X GET https://api.github.com/repos/gkirok/tsdb-nuclio/commits/464d6f73d393f7c927daf4ef91c4867d4f2ba950/statuses | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[0][\"state\"]' | if grep -iq error; then echo 'error'; else echo 'ok'; fi",
+                                                script: "curl --silent -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" -X GET https://api.github.com/repos/gkirok/tsdb-nuclio/commits/${TAG_SHA}/statuses | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[0][\"state\"]' | if grep -iq error; then echo 'error'; else echo 'ok'; fi",
                                                 returnStdout: true
                                         ).trim()
                                         if (COMMIT_STATUS != null && COMMIT_STATUS == 'error') {

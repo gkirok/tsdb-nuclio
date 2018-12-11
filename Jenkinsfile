@@ -5,6 +5,7 @@ quay_credentials = "iguazio-dev-quay-credentials"
 docker_user = "gallziguazio"
 docker_credentials = "iguazio-dev-docker-credentials"
 artifactory_user = "gallz"
+artifactory_url = "iguazio-dev-artifactory-url"
 artifactory_credentials = "iguazio-dev-artifactory-credentials"
 git_project = "tsdb-nuclio"
 git_project_user = "gkirok"
@@ -56,7 +57,8 @@ spec:
     node("${git_project}-${label}") {
         withCredentials([
                 usernamePassword(credentialsId: git_deploy_user, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME'),
-                string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
+                string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN'),
+                string(credentialsId: artifactory_url, variable: 'ARTIFACTORY_URL')
         ]) {
             def AUTO_TAG
             def TAG_VERSION
@@ -100,7 +102,7 @@ spec:
                     container('docker-cmd') {
                         sh """
                             cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}/functions/ingest
-                            docker build . --tag ${docker_user}/tsdb-ingest:${TAG_VERSION} --tag ${docker_user}/tsdb-ingest:latest --tag quay.io/${quay_user}/tsdb-ingest:${TAG_VERSION} --tag quay.io/${quay_user}/tsdb-ingest:latest
+                            docker build . --tag tsdb-ingest:${TAG_VERSION} --tag ${docker_user}/tsdb-ingest:${TAG_VERSION} --tag ${docker_user}/tsdb-ingest:latest --tag quay.io/${quay_user}/tsdb-ingest:${TAG_VERSION} --tag quay.io/${quay_user}/tsdb-ingest:latest --tag ${ARTIFACTORY_URL}/${artifactory_user}/tsdb-ingest:${TAG_VERSION} --tag ${ARTIFACTORY_URL}/${artifactory_user}/tsdb-ingest:latest
                         """
                     }
                 }
@@ -109,7 +111,7 @@ spec:
                     container('docker-cmd') {
                         sh """
                             cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}/functions/query
-                            docker build . --tag ${docker_user}/tsdb-query:${TAG_VERSION} --tag ${docker_user}/tsdb-query:latest --tag quay.io/${quay_user}/tsdb-query:${TAG_VERSION} --tag quay.io/${quay_user}/tsdb-query:latest
+                            docker build . --tag tsdb-query:${TAG_VERSION} --tag ${docker_user}/tsdb-query:${TAG_VERSION} --tag ${docker_user}/tsdb-query:latest --tag quay.io/${quay_user}/tsdb-query:${TAG_VERSION} --tag quay.io/${quay_user}/tsdb-query:latest --tag ${ARTIFACTORY_URL}/${artifactory_user}/tsdb-query:${TAG_VERSION} --tag ${ARTIFACTORY_URL}/${artifactory_user}/tsdb-query:latest
                         """
                     }
                 }
@@ -132,6 +134,17 @@ spec:
                             sh "docker push quay.io/${quay_user}/tsdb-ingest:latest"
                             sh "docker push quay.io/${quay_user}/tsdb-query:${TAG_VERSION}"
                             sh "docker push quay.io/${quay_user}/tsdb-query:latest"
+                        }
+                    }
+                }
+
+                stage('push to artifactory') {
+                    container('docker-cmd') {
+                        withDockerRegistry([credentialsId: artifactory_credentials, url: "https://${ARTIFACTORY_URL}/api/v1/"]) {
+                            sh "docker push ${ARTIFACTORY_URL}/${artifactory_user}/tsdb-ingest:${TAG_VERSION}"
+                            sh "docker push ${ARTIFACTORY_URL}/${artifactory_user}/tsdb-ingest:latest"
+                            sh "docker push ${ARTIFACTORY_URL}/${artifactory_user}/tsdb-query:${TAG_VERSION}"
+                            sh "docker push ${ARTIFACTORY_URL}/${artifactory_user}/tsdb-query:latest"
                         }
                     }
                 }

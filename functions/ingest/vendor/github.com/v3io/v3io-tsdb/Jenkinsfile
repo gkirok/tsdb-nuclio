@@ -408,14 +408,14 @@ spec:
                                 done_count++
                             }
                         }
-                        if(success_count >= tasks_list.length()) {
+                        if(success_count >= tasks_list.size()) {
                             echo "all releases have been successfully completed"
                             break
                         }
 
-                        if(done_count >= tasks_list.length() || i++ > 10) {
-                            def failed
-                            def notcompleted
+                        if(done_count >= tasks_list.size() || i++ > 10) {
+                            def failed = []
+                            def notcompleted = []
                             tasks_list.each { project, status ->
                                 if(status == null) {
                                     notcompleted += project
@@ -423,10 +423,10 @@ spec:
                                     failed += project
                                 }
                             }
-                            if(failed.length()) {
+                            if(failed.size()) {
                                 error(failed.join(',') + ' have been failed :_(')
                             }
-                            if(notcompleted.length()) {
+                            if(notcompleted.size()) {
                                 error(notcompleted.join(',') + ' have been not completed :(')
                             }
                             break

@@ -384,7 +384,7 @@ spec:
                                         returnStdout: true
                                 ).trim()
 
-                                echo "${RELEASE_SUCCESS}"
+                                echo "${project} is ${RELEASE_SUCCESS}"
                                 if (RELEASE_SUCCESS != null && RELEASE_SUCCESS == 'release') {
                                     tasks_list.putAt(project, true)
                                     done_count++

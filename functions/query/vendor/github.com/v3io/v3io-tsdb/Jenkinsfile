@@ -255,7 +255,9 @@ spec:
     if ( MAIN_TAG_VERSION != null && MAIN_TAG_VERSION.length() > 0 && PUBLISHED_BEFORE < expired ) {
         parallel(
             'v3io-tsdb': {
-                podTemplate(label: "v3io-tsdb-${label}", inheritFrom: "${git_project}-${label}") {
+                podTemplate(label: "v3io-tsdb-${label}", inheritFrom: "${git_project}-${label}", containers: [
+                        containerTemplate(name: 'golang', image: 'golang:1.11')
+                ]) {
                     node("v3io-tsdb-${label}") {
                         withCredentials([
                                 string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')

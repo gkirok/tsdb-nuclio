@@ -1,9 +1,57 @@
 label = "${UUID.randomUUID().toString()}"
 BUILD_FOLDER = "/go"
+expired=240
+attempts=15
 git_project = "v3io-tsdb"
 git_project_user = "gkirok"
 git_deploy_user = "iguazio-dev-git-user"
 git_deploy_user_token = "iguazio-dev-git-user-token"
+
+def build_v3io_tsdb(TAG_VERSION) {
+    withCredentials([
+            usernamePassword(credentialsId: git_deploy_user, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME'),
+            string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
+    ]) {
+        def git_project = 'v3io-tsdb'
+        stage('prepare sources') {
+            container('jnlp') {
+                sh """
+                    cd ${BUILD_FOLDER}
+                    git clone https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${git_project_user}/${git_project}.git src/github.com/v3io/${git_project}
+                    cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}
+                """
+//                    git checkout ${V3IO_TSDB_VERSION}
+            }
+        }
+
+        stage('build ${git_project} binaries in dood') {
+            container('golang') {
+                sh """
+                    cd ${BUILD_FOLDER}/src/github.com/v3io/${git_project}
+                    GOOS=linux GOARCH=amd64 TRAVIS_TAG=${TAG_VERSION} make bin
+                    GOOS=darwin GOARCH=amd64 TRAVIS_TAG=${TAG_VERSION} make bin
+                    GOOS=windows GOARCH=amd64 TRAVIS_TAG=${TAG_VERSION} make bin
+                    ls -la /go/bin
+                """
+            }
+        }
+
+        stage('upload release assets') {
+            container('jnlp') {
+                RELEASE_ID = sh(
+                        script: "curl -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" -X GET https://api.github.com/repos/${git_project_user}/${git_project}/releases/tags/v${TAG_VERSION} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[\"id\"]'",
+                        returnStdout: true
+                ).trim()
+
+                sh "curl -X POST -H \"Content-Type: application/data\" -H \"Authorization: token ${GIT_TOKEN}\" https://uploads.github.com/repos/${git_project_user}/v3io-tsdb/releases/${RELEASE_ID}/assets?name=tsdbctl-${TAG_VERSION}-linux-amd64 -F 'data=@/go/bin/tsdbctl-${TAG_VERSION}-linux-amd64'"
+
+                sh "curl -X POST -H \"Content-Type: application/data\" -H \"Authorization: token ${GIT_TOKEN}\" https://uploads.github.com/repos/${git_project_user}/v3io-tsdb/releases/${RELEASE_ID}/assets?name=tsdbctl-${TAG_VERSION}-darwin-amd64 -F 'data=@/go/bin/tsdbctl-${TAG_VERSION}-darwin-amd64'"
+
+                sh "curl -X POST -H \"Content-Type: application/data\" -H \"Authorization: token ${GIT_TOKEN}\" https://uploads.github.com/repos/${git_project_user}/v3io-tsdb/releases/${RELEASE_ID}/assets?name=tsdbctl-${TAG_VERSION}-windows-amd64 -F 'data=@/go/bin/tsdbctl-${TAG_VERSION}-windows-amd64'"
+            }
+        }
+    }
+}
 
 def build_nuclio() {
     withCredentials([
@@ -171,6 +219,13 @@ spec:
           mountPath: /var/run
         - name: go-shared
           mountPath: /go
+    - name: golang
+      image: golang:1.11
+      command: [ "/bin/sh", "-c", "--" ]
+      args: [ "while true; do sleep 30; done;" ]
+      volumeMounts:
+        - name: go-shared
+          mountPath: /go
   volumes:
     - name: docker-sock
       hostPath:
@@ -209,8 +264,35 @@ spec:
         }
     }
 
-    if ( MAIN_TAG_VERSION != null && MAIN_TAG_VERSION.length() > 0 && PUBLISHED_BEFORE < 240 ) {
+    if ( MAIN_TAG_VERSION != null && MAIN_TAG_VERSION.length() > 0 && PUBLISHED_BEFORE < expired ) {
         parallel(
+            'v3io-tsdb': {
+                podTemplate(label: "v3io-tsdb-${label}", inheritFrom: "${git_project}-${label}", containers: [
+                        containerTemplate(name: 'golang', image: 'golang:1.11')
+                ]) {
+                    node("v3io-tsdb-${label}") {
+                        withCredentials([
+                                string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
+                        ]) {
+                            def TAG_VERSION
+
+                            stage('trigger') {
+                                container('jnlp') {
+                                    TAG_VERSION = sh(
+                                            script: "echo ${TAG_NAME} | tr -d '\\n' | egrep '^v[\\.0-9]*\$' | sed 's/v//'",
+                                            returnStdout: true
+                                    ).trim()
+                                }
+                            }
+
+                            if (TAG_VERSION) {
+                                build_v3io_tsdb(TAG_VERSION)
+                            }
+                        }
+                    }
+                }
+            },
+
             'tsdb-nuclio': {
                 podTemplate(label: "v3io-tsdb-nuclio-${label}", inheritFrom: "${git_project}-${label}") {
                     node("v3io-tsdb-nuclio-${label}") {
@@ -358,10 +440,10 @@ spec:
         )
     } else {
         stage('warning') {
-            if (PUBLISHED_BEFORE >= 240) {
+            if (PUBLISHED_BEFORE >= expired) {
                 echo "Tag too old, published before $PUBLISHED_BEFORE minutes."
             } else {
-                echo "${TAG_VERSION} is not release tag."
+                echo "${MAIN_TAG_VERSION} is not release tag."
             }
         }
     }
@@ -375,8 +457,11 @@ spec:
                     i = 0
                     def tasks_list = ['demos':null, 'prometheus':null, 'tsdb-nuclio':null]
                     def success_count = 0
+
                     while( true ) {
                         def done_count = 0
+
+                        echo "attempt #${i}"
                         tasks_list.each { project, status ->
                             if (status == null) {
                                 def RELEASE_SUCCESS = sh(
@@ -415,7 +500,7 @@ spec:
                             break
                         }
 
-                        if(done_count >= tasks_list.size() || i++ > 10) {
+                        if(done_count >= tasks_list.size() || i++ > attempts) {
                             def failed = []
                             def notcompleted = []
                             def error_string = ''
@@ -438,6 +523,12 @@ spec:
 
                         sleep(60)
                     }
+                }
+            }
+
+            stage('update release status') {
+                container('jnlp') {
+                    sh "release_id=\$(curl -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" -X GET https://api.github.com/repos/${git_project_user}/${git_project}/releases/tags/v${MAIN_TAG_VERSION} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[\"id\"]'); curl -H \"Content-Type: application/json\" -H \"Authorization: token ${GIT_TOKEN}\" -X PATCH https://api.github.com/repos/${git_project_user}/${git_project}/releases/\${release_id} -d '{\"prerelease\": false}'"
                 }
             }
         }

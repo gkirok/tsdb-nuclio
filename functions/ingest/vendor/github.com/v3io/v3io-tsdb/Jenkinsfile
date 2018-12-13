@@ -210,6 +210,13 @@ spec:
           mountPath: /var/run
         - name: go-shared
           mountPath: /go
+    - name: golang
+      image: golang:1.11
+      command: [ "/bin/sh", "-c", "--" ]
+      args: [ "while true; do sleep 30; done;" ]
+      volumeMounts:
+        - name: go-shared
+          mountPath: /go
   volumes:
     - name: docker-sock
       hostPath:

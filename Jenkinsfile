@@ -111,7 +111,9 @@ spec:
                 }
 
                 stage('update release status') {
-                    common.update_release_status(git_project, git_project_user, "v${TAG_VERSION}", GIT_TOKEN)
+                    container('jnlp') {
+                        common.update_release_status(git_project, git_project_user, "v${TAG_VERSION}", GIT_TOKEN)
+                    }
                 }
             } else {
                 stage('warning') {

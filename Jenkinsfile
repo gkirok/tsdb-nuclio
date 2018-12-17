@@ -6,7 +6,6 @@ git_project_user = "gkirok"
 git_deploy_user_token = "iguazio-dev-git-user-token"
 git_deploy_user_private_key = "iguazio-dev-git-user-private-key"
 
-properties([pipelineTriggers([[$class: 'PeriodicFolderTrigger', interval: '2m']])])
 podTemplate(label: "${git_project}-${label}", yaml: """
 apiVersion: v1
 kind: Pod
@@ -86,7 +85,7 @@ spec:
                 stage('build tsdb-ingest in dood') {
                     container('docker-cmd') {
                         dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}/functions/ingest") {
-                            sh("docker build . tsdb-ingest:${TAG_VERSION}")
+                            sh("docker build . --tag tsdb-ingest:${TAG_VERSION}")
                         }
                     }
                 }
@@ -100,7 +99,7 @@ spec:
                 stage('build tsdb-query in dood') {
                     container('docker-cmd') {
                         dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}/functions/query") {
-                            sh("docker build . tsdb-query:${TAG_VERSION}")
+                            sh("docker build . --tag tsdb-query:${TAG_VERSION}")
                         }
                     }
                 }

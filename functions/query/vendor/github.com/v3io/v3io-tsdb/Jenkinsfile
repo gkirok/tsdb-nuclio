@@ -269,9 +269,7 @@ spec:
                         withCredentials([
                                 string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
                         ]) {
-                            if (TAG_VERSION) {
-                                build_v3io_tsdb(MAIN_TAG_VERSION)
-                            }
+                            build_v3io_tsdb(MAIN_TAG_VERSION)
                         }
                     }
                 }

@@ -60,11 +60,7 @@ spec:
 
             stage('get tag data') {
                 container('jnlp') {
-                    TAG_VERSION = sh(
-                            script: "echo ${TAG_NAME} | tr -d '\\n' | egrep '^v[\\.0-9]*.*\$' | sed 's/v//'",
-                            returnStdout: true
-                    ).trim()
-
+                    TAG_VERSION = github.get_tag_version(TAG_NAME)
                     PUBLISHED_BEFORE = github.get_tag_published_before(git_project, git_project_user, "v${TAG_VERSION}", GIT_TOKEN)
 
                     echo "$TAG_VERSION"
@@ -82,33 +78,31 @@ spec:
                     }
                 }
 
-                stage('build tsdb-ingest in dood') {
-                    container('docker-cmd') {
-                        dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}/functions/ingest") {
-                            sh("docker build . --tag tsdb-ingest:${TAG_VERSION}")
+                parallel(
+                        'build tsdb-ingest': {
+                            container('docker-cmd') {
+                                dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}/functions/ingest") {
+                                    sh("docker build . --tag tsdb-ingest:${TAG_VERSION}")
+                                }
+                            }
+
+                            container('docker-cmd') {
+                                dockerx.images_push_multi_registries(["tsdb-ingest:${TAG_VERSION}"], multi_credentials)
+                            }
+                        },
+
+                        'build tsdb-query in dood': {
+                            container('docker-cmd') {
+                                dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}/functions/query") {
+                                    sh("docker build . --tag tsdb-query:${TAG_VERSION}")
+                                }
+                            }
+
+                            container('docker-cmd') {
+                                dockerx.images_push_multi_registries(["tsdb-query:${TAG_VERSION}"], multi_credentials)
+                            }
                         }
-                    }
-                }
-
-                stage('push') {
-                    container('docker-cmd') {
-                        dockerx.images_push_multi_registries(["tsdb-ingest:${TAG_VERSION}"], multi_credentials)
-                    }
-                }
-
-                stage('build tsdb-query in dood') {
-                    container('docker-cmd') {
-                        dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}/functions/query") {
-                            sh("docker build . --tag tsdb-query:${TAG_VERSION}")
-                        }
-                    }
-                }
-
-                stage('push') {
-                    container('docker-cmd') {
-                        dockerx.images_push_multi_registries(["tsdb-query:${TAG_VERSION}"], multi_credentials)
-                    }
-                }
+                )
 
                 stage('update release status') {
                     container('jnlp') {

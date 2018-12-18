@@ -55,8 +55,8 @@ spec:
             pipelinex = library(identifier: 'pipelinex@DEVOPS-204-pipelinex', retriever: modernSCM(
                     [$class: 'GitSCMSource',
                      credentialsId: git_deploy_user_private_key,
-                     remote: "git@github.com:${git_project_user}/pipelinex.git"])).com.iguazio.pipelinex
-            multi_credentials=[pipelinex.DockerRepoDev.ARTIFACTORY, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
+                     remote: "git@github.com:iguazio/pipelinex.git"])).com.iguazio.pipelinex
+            multi_credentials=[pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
 
             stage('get tag data') {
                 container('jnlp') {
@@ -65,7 +65,7 @@ spec:
                             returnStdout: true
                     ).trim()
 
-                    PUBLISHED_BEFORE = common.get_tag_published_before(git_project, git_project_user, "v${TAG_VERSION}", GIT_TOKEN)
+                    PUBLISHED_BEFORE = github.get_tag_published_before(git_project, git_project_user, "v${TAG_VERSION}", GIT_TOKEN)
 
                     echo "$TAG_VERSION"
                     echo "$PUBLISHED_BEFORE"
@@ -112,7 +112,7 @@ spec:
 
                 stage('update release status') {
                     container('jnlp') {
-                        common.update_release_status(git_project, git_project_user, "v${TAG_VERSION}", GIT_TOKEN)
+                        github.update_release_status(git_project, git_project_user, "v${TAG_VERSION}", GIT_TOKEN)
                     }
                 }
             } else {

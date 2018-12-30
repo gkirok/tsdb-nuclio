@@ -57,7 +57,7 @@ func (a *V3ioPromAdapter) Close() error {
 }
 
 func (a *V3ioPromAdapter) Querier(_ context.Context, mint, maxt int64) (storage.Querier, error) {
-	v3ioQuerier, err := a.db.QuerierV2(nil)
+	v3ioQuerier, err := a.db.QuerierV2()
 	promQuerier := V3ioPromQuerier{v3ioQuerier: v3ioQuerier, logger: a.logger.GetChild("v3io-prom-query"), mint: mint, maxt: maxt}
 	return &promQuerier, err
 }
@@ -219,10 +219,10 @@ type Labels struct {
 }
 
 // convert Label set to a string in the form key1=v1,key2=v2.. + name + hash
-func (l Labels) GetKey() (string, string, uint64) {
+func (ls Labels) GetKey() (string, string, uint64) {
 	key := ""
 	name := ""
-	for _, lbl := range *l.lbls {
+	for _, lbl := range *ls.lbls {
 		if lbl.Name == "__name__" {
 			name = lbl.Value
 		} else {
@@ -230,16 +230,16 @@ func (l Labels) GetKey() (string, string, uint64) {
 		}
 	}
 	if len(key) == 0 {
-		return name, "", l.lbls.Hash()
+		return name, "", ls.lbls.Hash()
 	}
-	return name, key[:len(key)-1], l.lbls.Hash()
+	return name, key[:len(key)-1], ls.lbls.Hash()
 
 }
 
 // create update expression
-func (l Labels) GetExpr() string {
+func (ls Labels) GetExpr() string {
 	lblexpr := ""
-	for _, lbl := range *l.lbls {
+	for _, lbl := range *ls.lbls {
 		if lbl.Name != "__name__" {
 			lblexpr = lblexpr + fmt.Sprintf("%s='%s'; ", lbl.Name, lbl.Value)
 		} else {
@@ -248,6 +248,14 @@ func (l Labels) GetExpr() string {
 	}
 
 	return lblexpr
+}
+
+func (ls Labels) LabelNames() []string {
+	var res []string
+	for _, l := range *ls.lbls {
+		res = append(res, l.Name)
+	}
+	return res
 }
 
 func newMetadataSeriesSet(labels []utils.Labels) utils.SeriesSet {
@@ -278,3 +286,15 @@ type metadataSeries struct {
 func (s *metadataSeries) Labels() utils.Labels           { return s.labels }
 func (s *metadataSeries) Iterator() utils.SeriesIterator { return utils.NullSeriesIterator{} }
 func (s *metadataSeries) GetKey() uint64                 { return s.labels.Hash() }
+
+func (ls Labels) Filter(keep []string) utils.LabelsIfc {
+	var res labels.Labels
+	for _, l := range *ls.lbls {
+		for _, keepLabel := range keep {
+			if l.Name == labels.MetricName || l.Name == keepLabel {
+				res = append(res, l)
+			}
+		}
+	}
+	return Labels{lbls: &res}
+}

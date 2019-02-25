@@ -117,20 +117,6 @@ def build_nuclio(V3IO_TSDB_VERSION, internal_status="stable") {
                     echo err
                 }
             }
-
-            container('jnlp') {
-                try {
-                    dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
-                        sh """
-                            git checkout development
-                            git merge origin/master
-                            git push origin development
-                        """
-                    }
-                } catch (err) {
-                    echo "Can not push code to development"
-                }
-            }
         }
     }
 }

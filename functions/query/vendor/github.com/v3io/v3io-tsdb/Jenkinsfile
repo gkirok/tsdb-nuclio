@@ -130,7 +130,7 @@ def build_nuclio(V3IO_TSDB_VERSION, internal_status="stable") {
                         git add functions/ingest/vendor/github.com functions/query/vendor/github.com;
                     """
                     try {
-                        sh("git commit -am 'Updated TSDB to ${V3IO_TSDB_VERSION}'")
+                        sh("git commit -m 'Updated TSDB to ${V3IO_TSDB_VERSION}'")
                     } catch (err) {
                         echo "Can not commit"
                     }
@@ -202,7 +202,7 @@ def build_prometheus(V3IO_TSDB_VERSION, internal_status="stable") {
                         git add vendor/github.com;
                     """
                     try {
-                        sh("git commit -am 'Updated TSDB to ${V3IO_TSDB_VERSION}'")
+                        sh("git commit -m 'Updated TSDB to ${V3IO_TSDB_VERSION}'")
                     } catch (err) {
                         echo "Can not commit"
                     }

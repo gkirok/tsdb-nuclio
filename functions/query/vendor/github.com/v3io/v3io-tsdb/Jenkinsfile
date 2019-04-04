@@ -182,6 +182,7 @@ def build_prometheus(V3IO_TSDB_VERSION, internal_status="stable") {
                 dir("${BUILD_FOLDER}/src/github.com/${git_project_upstream_user}/${git_project}") {
                     if("${git_project_user}" != "${git_project_upstream_user}") {
                         sh("GO111MODULE=on go mod edit -replace github.com/${git_project_upstream_user}/v3io-tsdb=github.com/${git_project_user}/v3io-tsdb@${V3IO_TSDB_VERSION}")
+                        sh("GO111MODULE=on go get")
                     } else {
                         sh("GO111MODULE=on go get github.com/${git_project_user}/v3io-tsdb@${V3IO_TSDB_VERSION}")
                     }

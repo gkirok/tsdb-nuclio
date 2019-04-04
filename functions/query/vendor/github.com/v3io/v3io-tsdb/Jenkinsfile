@@ -180,17 +180,12 @@ def build_prometheus(V3IO_TSDB_VERSION, internal_status="stable") {
             }
             container('golang') {
                 dir("${BUILD_FOLDER}/src/github.com/${git_project_upstream_user}/${git_project}") {
-                    echo "test gomod"
                     if("${git_project_user}" != "${git_project_upstream_user}") {
-                        echo "started"
-                        sh("go mod edit -replace github.com/${git_project_upstream_user}/v3io-tsdb=github.com/${git_project_user}/v3io-tsdb@${V3IO_TSDB_VERSION}")
-                        echo "ended"
+                        sh("GO111MODULE=on go mod edit -replace github.com/${git_project_upstream_user}/v3io-tsdb=github.com/${git_project_user}/v3io-tsdb@${V3IO_TSDB_VERSION}")
+                    } else {
+                        sh("GO111MODULE=on go get github.com/${git_project_user}/v3io-tsdb@${V3IO_TSDB_VERSION}")
                     }
-                    echo "no test"
-                    sh """
-                        GO111MODULE=on go get github.com/${git_project_user}/v3io-tsdb@${V3IO_TSDB_VERSION}
-                        GO111MODULE=on go mod vendor
-                    """
+                    sh("GO111MODULE=on go mod vendor")
                 }
             }
         }

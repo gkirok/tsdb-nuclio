@@ -270,7 +270,9 @@ def build_frames(V3IO_TSDB_VERSION, internal_status="stable") {
                         git remote rm origin
                         git remote add origin https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/${git_project_user}/${git_project}.git
                         git status
-                        ls -la 
+                        whoami
+                        ls -la
+                        sudo chown jenkins:jenkins ./ -R 
                         git add go.mod;
                     """
                     try {
